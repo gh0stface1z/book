@@ -37,38 +37,6 @@ canvas {
   display: block;
 }
 
-.texto {
-  position: fixed;
-
-  top: 40px;
-  left: 50%;
-
-  transform: translateX(-50%);
-
-  text-align: center;
-
-  pointer-events: none;
-
-  z-index: 10;
-}
-
-.texto h1 {
-  font-weight: normal;
-  font-size: 28px;
-
-  letter-spacing: 1px;
-}
-
-.texto p {
-  margin-top: 8px;
-
-  font-size: 11px;
-
-  letter-spacing: 2px;
-
-  opacity: 0.55;
-}
-
 .instrucao {
   position: fixed;
 
