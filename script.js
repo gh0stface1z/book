@@ -19,7 +19,7 @@ const scene = new THREE.Scene();
 ===================================================== */
 
 const camera = new THREE.PerspectiveCamera(
-  40,
+  45,
   window.innerWidth / window.innerHeight,
   0.1,
   100
@@ -58,7 +58,7 @@ document
 
 
 /* =====================================================
-   CONTROLE DA CÂMERA
+   CONTROLES
 ===================================================== */
 
 const controls = new OrbitControls(
@@ -76,62 +76,67 @@ controls.enableZoom = true;
 
 controls.enableRotate = true;
 
+controls.minDistance = 3;
+controls.maxDistance = 10;
+
 
 /* =====================================================
-   LUZ AMBIENTE
+   LUZES
 ===================================================== */
 
 const ambient = new THREE.AmbientLight(
-  0xfff2df,
-  2
+  0xfff3e2,
+  2.5
 );
 
 scene.add(ambient);
 
 
-/* =====================================================
-   LUZ PRINCIPAL
-===================================================== */
+const principal = new THREE.DirectionalLight(
+  0xffe5c4,
+  4
+);
 
-const mainLight =
-  new THREE.DirectionalLight(
-    0xffe6c6,
-    3
-  );
-
-mainLight.position.set(
+principal.position.set(
   4,
   6,
   5
 );
 
-mainLight.castShadow = true;
+principal.castShadow = true;
 
-scene.add(mainLight);
+scene.add(principal);
 
 
-/* =====================================================
-   LUZ QUENTE
-===================================================== */
-
-const warmLight =
-  new THREE.PointLight(
-    0xffaa60,
-    7,
-    10
-  );
-
-warmLight.position.set(
-  -3,
-  3,
-  3
+const luzQuente = new THREE.PointLight(
+  0xffa65c,
+  10,
+  12
 );
 
-scene.add(warmLight);
+luzQuente.position.set(
+  -4,
+  3,
+  4
+);
+
+scene.add(luzQuente);
 
 
 /* =====================================================
-   VARIÁVEIS DA CAIXA
+   GRUPO DA CAIXA
+
+   Em vez de mover a cena inteira,
+   colocamos o modelo aqui dentro.
+===================================================== */
+
+const grupoCaixa = new THREE.Group();
+
+scene.add(grupoCaixa);
+
+
+/* =====================================================
+   VARIÁVEIS
 ===================================================== */
 
 let caixa = null;
@@ -141,49 +146,68 @@ let caixaAberta = false;
 
 
 /* =====================================================
-   CARREGADOR
+   CARREGAR MODELO
 ===================================================== */
 
-const loader =
-  new GLTFLoader();
+const loader = new GLTFLoader();
 
 
 loader.load(
 
   "./caixa.glb",
 
-  /* =============================
-     MODELO CARREGADO
-  ============================= */
-
   (gltf) => {
 
     caixa = gltf.scene;
 
-    scene.add(caixa);
+    grupoCaixa.add(caixa);
 
 
-    /* =============================
-       SOMBRAS
-    ============================= */
+    /* ---------------------------------------------
+       ATUALIZAR MATRIZES
+    --------------------------------------------- */
 
-    caixa.traverse((object) => {
-
-      if (object.isMesh) {
-
-        object.castShadow = true;
-        object.receiveShadow = true;
-
-      }
-
-    });
+    caixa.updateMatrixWorld(true);
 
 
-    /* =============================
-       MEDIR MODELO ORIGINAL
-    ============================= */
+    /* ---------------------------------------------
+       DESCOBRIR LIMITES ORIGINAIS
+    --------------------------------------------- */
 
     let box =
+      new THREE.Box3()
+        .setFromObject(caixa);
+
+    const center =
+      box.getCenter(
+        new THREE.Vector3()
+      );
+
+
+    console.log(
+      "Centro original:",
+      center
+    );
+
+
+    /*
+      O seu modelo veio longe do ponto 0.
+      Isso traz a geometria de volta.
+    */
+
+    caixa.position.x -= center.x;
+    caixa.position.y -= center.y;
+    caixa.position.z -= center.z;
+
+
+    caixa.updateMatrixWorld(true);
+
+
+    /* ---------------------------------------------
+       MEDIR DE NOVO
+    --------------------------------------------- */
+
+    box =
       new THREE.Box3()
         .setFromObject(caixa);
 
@@ -194,18 +218,17 @@ loader.load(
 
 
     console.log(
-      "Tamanho original:",
+      "Tamanho:",
       size
     );
 
 
-    /* =============================
-       ESCALA
+    /* ---------------------------------------------
+       ESCALA AUTOMÁTICA
 
-       Aqui fazemos a caixa ter
-       aproximadamente 4 unidades
-       no maior lado.
-    ============================= */
+       Queremos a maior dimensão
+       com aproximadamente 4 unidades.
+    --------------------------------------------- */
 
     const maiorLado =
       Math.max(
@@ -214,104 +237,59 @@ loader.load(
         size.z
       );
 
-    const tamanhoDesejado = 4;
-
     const escala =
-      tamanhoDesejado /
-      maiorLado;
+      4 / maiorLado;
 
-    caixa.scale.setScalar(
+
+    grupoCaixa.scale.setScalar(
       escala
     );
 
 
-    /* =============================
-       RECALCULAR DEPOIS DA ESCALA
-    ============================= */
-
-    box =
-      new THREE.Box3()
-        .setFromObject(caixa);
-
-    const center =
-      box.getCenter(
-        new THREE.Vector3()
-      );
+    grupoCaixa.updateMatrixWorld(true);
 
 
-    /* =============================
-       CENTRALIZAR
+    /* ---------------------------------------------
+       SOMBRAS
+    --------------------------------------------- */
 
-       IMPORTANTE:
-       centralizamos DEPOIS de
-       redimensionar.
-    ============================= */
+    caixa.traverse((objeto) => {
 
-    caixa.position.x -= center.x;
-    caixa.position.y -= center.y;
-    caixa.position.z -= center.z;
+      if (objeto.isMesh) {
 
+        objeto.castShadow = true;
+        objeto.receiveShadow = true;
 
-    /* =============================
-       RECALCULAR CAIXA FINAL
-    ============================= */
+      }
 
-    box =
-      new THREE.Box3()
-        .setFromObject(caixa);
-
-    const finalSize =
-      box.getSize(
-        new THREE.Vector3()
-      );
-
-    const finalCenter =
-      box.getCenter(
-        new THREE.Vector3()
-      );
+    });
 
 
-    console.log(
-      "Tamanho final:",
-      finalSize
-    );
-
-
-    /* =============================
-       ENQUADRAR CÂMERA
-    ============================= */
-
-    enquadrarCaixa(
-      finalSize,
-      finalCenter
-    );
-
-
-    /* =============================
+    /* ---------------------------------------------
        PROCURAR TAMPA
-    ============================= */
+    --------------------------------------------- */
 
-    caixa.traverse((object) => {
+    caixa.traverse((objeto) => {
 
-      if (object.isMesh) {
+      if (objeto.isMesh) {
 
         console.log(
-          "Peça:",
-          object.name
+          "PEÇA:",
+          objeto.name
         );
 
       }
 
 
       if (
-        object.name ===
+        objeto.name ===
         "Cube_064_2_0"
       ) {
 
-        tampa = object;
+        tampa = objeto;
 
         console.log(
-          "TAMPA ENCONTRADA:",
+          "Possível tampa:",
           tampa
         );
 
@@ -319,12 +297,37 @@ loader.load(
 
     });
 
+
+    /* ---------------------------------------------
+       POSIÇÃO DA CÂMERA
+
+       Vista diagonal para mostrar
+       que a caixa é 3D.
+    --------------------------------------------- */
+
+    camera.position.set(
+      5,
+      3.5,
+      6
+    );
+
+
+    controls.target.set(
+      0,
+      0,
+      0
+    );
+
+
+    controls.update();
+
+
+    console.log(
+      "CAIXA CARREGADA!"
+    );
+
   },
 
-
-  /* =============================
-     PROGRESSO
-  ============================= */
 
   (xhr) => {
 
@@ -344,14 +347,10 @@ loader.load(
   },
 
 
-  /* =============================
-     ERRO
-  ============================= */
-
   (erro) => {
 
     console.error(
-      "Erro carregando caixa:",
+      "ERRO AO CARREGAR:",
       erro
     );
 
@@ -361,114 +360,7 @@ loader.load(
 
 
 /* =====================================================
-   FUNÇÃO QUE APROXIMA A CÂMERA
-===================================================== */
-
-function enquadrarCaixa(
-  size,
-  center
-) {
-
-  /*
-    Calcula uma distância de câmera
-    baseada no tamanho REAL do modelo.
-  */
-
-  const altura =
-    Math.max(
-      size.y,
-      0.1
-    );
-
-  const largura =
-    Math.max(
-      size.x,
-      size.z
-    );
-
-
-  const fov =
-    THREE.MathUtils.degToRad(
-      camera.fov
-    );
-
-
-  const distanciaVertical =
-    altura /
-    (
-      2 *
-      Math.tan(fov / 2)
-    );
-
-
-  const distanciaHorizontal =
-    largura /
-    (
-      2 *
-      Math.tan(fov / 2)
-    ) /
-    camera.aspect;
-
-
-  /*
-    1.15 deixa uma pequena margem.
-    Se quiser ainda MAIOR,
-    reduza para 1.0.
-  */
-
-  const distancia =
-    Math.max(
-      distanciaVertical,
-      distanciaHorizontal
-    ) * 1.15;
-
-
-  /*
-    Vista levemente de cima,
-    como uma caixa sobre uma mesa.
-  */
-
-  camera.position.set(
-    center.x,
-    center.y + size.y * 0.75,
-    center.z + distancia
-  );
-
-
-  controls.target.copy(
-    center
-  );
-
-
-  /*
-    Limites do zoom.
-  */
-
-  controls.minDistance =
-    distancia * 0.55;
-
-  controls.maxDistance =
-    distancia * 2.2;
-
-
-  camera.near =
-    Math.max(
-      distancia / 100,
-      0.01
-    );
-
-  camera.far =
-    distancia * 100;
-
-  camera.updateProjectionMatrix();
-
-  controls.update();
-
-}
-
-
-/* =====================================================
-   RAYCAST
+   CLIQUE
 ===================================================== */
 
 const raycaster =
@@ -478,96 +370,72 @@ const pointer =
   new THREE.Vector2();
 
 
-/* =====================================================
-   CLIQUE NA CAIXA
-===================================================== */
+renderer.domElement.addEventListener(
+  "click",
+  (event) => {
 
-renderer.domElement
-  .addEventListener(
-    "click",
-    (event) => {
+    if (!caixa) return;
 
-      if (!caixa) {
-        return;
+
+    pointer.x =
+      (
+        event.clientX /
+        window.innerWidth
+      ) * 2 - 1;
+
+
+    pointer.y =
+      -(
+        event.clientY /
+        window.innerHeight
+      ) * 2 + 1;
+
+
+    raycaster.setFromCamera(
+      pointer,
+      camera
+    );
+
+
+    const meshes = [];
+
+
+    caixa.traverse((objeto) => {
+
+      if (objeto.isMesh) {
+
+        meshes.push(objeto);
+
       }
 
-
-      pointer.x =
-        (
-          event.clientX /
-          window.innerWidth
-        ) * 2 - 1;
+    });
 
 
-      pointer.y =
-        -(
-          event.clientY /
-          window.innerHeight
-        ) * 2 + 1;
-
-
-      raycaster.setFromCamera(
-        pointer,
-        camera
+    const hits =
+      raycaster.intersectObjects(
+        meshes,
+        true
       );
 
 
-      const meshes = [];
+    if (hits.length > 0) {
 
-
-      caixa.traverse(
-        (object) => {
-
-          if (object.isMesh) {
-
-            meshes.push(
-              object
-            );
-
-          }
-
-        }
+      console.log(
+        "Clicou em:",
+        hits[0].object.name
       );
 
-
-      const hits =
-        raycaster.intersectObjects(
-          meshes,
-          true
-        );
-
-
-      if (
-        hits.length > 0
-      ) {
-
-        console.log(
-          "Clicou em:",
-          hits[0].object.name
-        );
-
-        toggleCaixa();
-
-      }
+      caixaAberta =
+        !caixaAberta;
 
     }
-  );
+
+  }
+);
 
 
 /* =====================================================
-   ABRIR / FECHAR
-===================================================== */
-
-function toggleCaixa() {
-
-  caixaAberta =
-    !caixaAberta;
-
-}
-
-
-/* =====================================================
-   LOOP
+   ANIMAÇÃO
 ===================================================== */
 
 function animate() {
@@ -580,29 +448,27 @@ function animate() {
   controls.update();
 
 
-  /* =============================
-     ANIMAÇÃO DA TAMPA
-  ============================= */
+  /*
+    Por enquanto mantemos a tentativa
+    de animação da tampa.
+
+    Depois vamos acertar a dobradiça
+    corretamente.
+  */
 
   if (tampa) {
 
-    const fechada = 0;
-
-    const aberta =
-      -Math.PI * 0.55;
-
-
     const destino =
       caixaAberta
-        ? aberta
-        : fechada;
+        ? -Math.PI * 0.55
+        : 0;
 
 
     tampa.rotation.z +=
       (
         destino -
         tampa.rotation.z
-      ) * 0.07;
+      ) * 0.06;
 
   }
 
