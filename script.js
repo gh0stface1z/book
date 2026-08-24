@@ -365,8 +365,8 @@ function animate() {
       Aproximadamente 100 graus.
     */
 
-    const aberta =
-      -Math.PI * 0.55;
+   const aberta =
+  Math.PI * 0.55;
 
 
     const destino =
