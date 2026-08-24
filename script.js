@@ -117,6 +117,17 @@ scene.add(grupo);
 
 
 /* =========================================
+   VARIÁVEIS DA CAIXA
+========================================= */
+
+let caixa = null;
+
+let tampa = null;
+
+let caixaAberta = false;
+
+
+/* =========================================
    CAIXA
 ========================================= */
 
@@ -128,7 +139,7 @@ loader.load(
 
   (gltf) => {
 
-    const caixa = gltf.scene;
+    caixa = gltf.scene;
 
     grupo.add(caixa);
 
@@ -157,8 +168,7 @@ loader.load(
 
 
     /*
-      Só para garantir que os
-      materiais apareçam corretamente.
+      Materiais.
     */
 
     caixa.traverse((objeto) => {
@@ -170,6 +180,37 @@ loader.load(
 
         objeto.material.needsUpdate =
           true;
+
+
+        /*
+          Mostra no console o nome
+          de cada parte do modelo.
+        */
+
+        console.log(
+          "PEÇA:",
+          objeto.name
+        );
+
+      }
+
+
+      /*
+        ESTA é a peça que estamos
+        testando como tampa.
+      */
+
+      if (
+        objeto.name ===
+        "Cube_036_8_0"
+      ) {
+
+        tampa = objeto;
+
+        console.log(
+          "TAMPA ENCONTRADA:",
+          tampa
+        );
 
       }
 
@@ -212,6 +253,88 @@ loader.load(
 
 
 /* =========================================
+   CLIQUE NA TAMPA
+========================================= */
+
+const raycaster =
+  new THREE.Raycaster();
+
+const pointer =
+  new THREE.Vector2();
+
+
+renderer.domElement.addEventListener(
+  "click",
+  (event) => {
+
+    /*
+      Se a tampa ainda não carregou,
+      não faz nada.
+    */
+
+    if (!tampa) {
+      return;
+    }
+
+
+    /*
+      Converte o clique do mouse
+      para coordenadas do Three.js.
+    */
+
+    pointer.x =
+      (
+        event.clientX /
+        window.innerWidth
+      ) * 2 - 1;
+
+
+    pointer.y =
+      -(
+        event.clientY /
+        window.innerHeight
+      ) * 2 + 1;
+
+
+    raycaster.setFromCamera(
+      pointer,
+      camera
+    );
+
+
+    /*
+      Verifica se clicamos
+      especificamente na tampa.
+    */
+
+    const hits =
+      raycaster.intersectObject(
+        tampa,
+        true
+      );
+
+
+    if (
+      hits.length > 0
+    ) {
+
+      caixaAberta =
+        !caixaAberta;
+
+
+      console.log(
+        caixaAberta
+          ? "ABRINDO CAIXA"
+          : "FECHANDO CAIXA"
+      );
+
+    }
+
+  }
+);
+
+
+/* =========================================
    LOOP
 ========================================= */
 
@@ -221,7 +344,49 @@ function animate() {
     animate
   );
 
+
   controls.update();
+
+
+  /* =====================================
+     ANIMAÇÃO DA TAMPA
+  ===================================== */
+
+  if (tampa) {
+
+    /*
+      0 = posição fechada.
+    */
+
+    const fechada = 0;
+
+
+    /*
+      Aproximadamente 100 graus.
+    */
+
+    const aberta =
+      -Math.PI * 0.55;
+
+
+    const destino =
+      caixaAberta
+        ? aberta
+        : fechada;
+
+
+    /*
+      Movimento suave.
+    */
+
+    tampa.rotation.z +=
+      (
+        destino -
+        tampa.rotation.z
+      ) * 0.06;
+
+  }
+
 
   renderer.render(
     scene,
@@ -245,7 +410,9 @@ window.addEventListener(
       window.innerWidth /
       window.innerHeight;
 
+
     camera.updateProjectionMatrix();
+
 
     renderer.setSize(
       window.innerWidth,
