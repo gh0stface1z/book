@@ -1,48 +1,39 @@
 import * as THREE from "three";
 
-import { GLTFLoader }
-from "three/addons/loaders/GLTFLoader.js";
+import { GLTFLoader } from
+  "three/addons/loaders/GLTFLoader.js";
 
-import { OrbitControls }
-from "three/addons/controls/OrbitControls.js";
+import { OrbitControls } from
+  "three/addons/controls/OrbitControls.js";
 
 
-/* =========================
+/* =====================================================
    CENA
-========================= */
+===================================================== */
 
 const scene = new THREE.Scene();
 
 
-/* =========================
+/* =====================================================
    CÂMERA
-========================= */
+===================================================== */
 
-const camera =
-  new THREE.PerspectiveCamera(
-    40,
-    window.innerWidth /
-    window.innerHeight,
-    0.1,
-    100
-  );
-
-camera.position.set(
-  4,
-  3,
-  5
+const camera = new THREE.PerspectiveCamera(
+  40,
+  window.innerWidth / window.innerHeight,
+  0.1,
+  100
 );
 
 
-/* =========================
+/* =====================================================
    RENDER
-========================= */
+===================================================== */
 
-const renderer =
-  new THREE.WebGLRenderer({
-    antialias: true,
-    alpha: true
-  });
+const renderer = new THREE.WebGLRenderer({
+  antialias: true,
+  alpha: true
+});
 
 renderer.setSize(
   window.innerWidth,
@@ -50,10 +41,7 @@ renderer.setSize(
 );
 
 renderer.setPixelRatio(
-  Math.min(
-    window.devicePixelRatio,
-    2
-  )
+  Math.min(window.devicePixelRatio, 2)
 );
 
 renderer.outputColorSpace =
@@ -61,67 +49,60 @@ renderer.outputColorSpace =
 
 renderer.shadowMap.enabled = true;
 
+renderer.shadowMap.type =
+  THREE.PCFSoftShadowMap;
+
 document
   .getElementById("scene")
-  .appendChild(
-    renderer.domElement
-  );
+  .appendChild(renderer.domElement);
 
 
-/* =========================
-   CONTROLES
-========================= */
+/* =====================================================
+   CONTROLE DA CÂMERA
+===================================================== */
 
-const controls =
-  new OrbitControls(
-    camera,
-    renderer.domElement
-  );
+const controls = new OrbitControls(
+  camera,
+  renderer.domElement
+);
 
 controls.enableDamping = true;
 
+controls.dampingFactor = 0.06;
+
 controls.enablePan = false;
 
-controls.minDistance = 3;
-controls.maxDistance = 8;
+controls.enableZoom = true;
 
-controls.maxPolarAngle =
-  Math.PI / 2.05;
-
-controls.target.set(
-  0,
-  0.4,
-  0
-);
+controls.enableRotate = true;
 
 
-/* =========================
+/* =====================================================
    LUZ AMBIENTE
-========================= */
+===================================================== */
 
-const ambient =
-  new THREE.AmbientLight(
-    0xfff4e5,
-    1.8
-  );
+const ambient = new THREE.AmbientLight(
+  0xfff2df,
+  2
+);
 
 scene.add(ambient);
 
 
-/* =========================
+/* =====================================================
    LUZ PRINCIPAL
-========================= */
+===================================================== */
 
 const mainLight =
   new THREE.DirectionalLight(
-    0xffe2b7,
+    0xffe6c6,
     3
   );
 
 mainLight.position.set(
-  3,
-  5,
-  4
+  4,
+  6,
+  5
 );
 
 mainLight.castShadow = true;
@@ -129,77 +110,29 @@ mainLight.castShadow = true;
 scene.add(mainLight);
 
 
-/* =========================
+/* =====================================================
    LUZ QUENTE
-========================= */
+===================================================== */
 
 const warmLight =
   new THREE.PointLight(
-    0xffb36b,
-    12,
-    8
+    0xffaa60,
+    7,
+    10
   );
 
 warmLight.position.set(
-  -2,
-  2,
-  2
+  -3,
+  3,
+  3
 );
 
 scene.add(warmLight);
 
 
-/* =========================
-   CHÃO
-========================= */
-
-const box = new THREE.Box3().setFromObject(caixa);
-
-const size = box.getSize(new THREE.Vector3());
-const center = box.getCenter(new THREE.Vector3());
-
-// centraliza a caixa
-caixa.position.sub(center);
-
-// recalcula depois de centralizar
-const maxDim = Math.max(size.x, size.y, size.z);
-
-// tamanho visual que queremos
-const targetSize = 4;
-
-const scale = targetSize / maxDim;
-
-caixa.scale.setScalar(scale);
-
-// recalcula o tamanho FINAL
-const finalBox = new THREE.Box3().setFromObject(caixa);
-const finalSize = finalBox.getSize(new THREE.Vector3());
-
-// câmera posicionada de acordo com o tamanho real
-const distance =
-  Math.max(finalSize.x, finalSize.y, finalSize.z) * 1.8;
-
-camera.position.set(
-  distance * 0.8,
-  distance * 0.55,
-  distance
-);
-
-controls.target.set(
-  0,
-  0,
-  0
-);
-
-controls.update();
-
-
-/* =========================
-   CARREGAR CAIXA
-========================= */
-
-const loader =
-  new GLTFLoader();
+/* =====================================================
+   VARIÁVEIS DA CAIXA
+===================================================== */
 
 let caixa = null;
 let tampa = null;
@@ -207,9 +140,21 @@ let tampa = null;
 let caixaAberta = false;
 
 
+/* =====================================================
+   CARREGADOR
+===================================================== */
+
+const loader =
+  new GLTFLoader();
+
+
 loader.load(
 
   "./caixa.glb",
+
+  /* =============================
+     MODELO CARREGADO
+  ============================= */
 
   (gltf) => {
 
@@ -218,39 +163,32 @@ loader.load(
     scene.add(caixa);
 
 
-    /* =========================
+    /* =============================
        SOMBRAS
-    ========================= */
+    ============================= */
 
-    caixa.traverse(
-      (object) => {
+    caixa.traverse((object) => {
 
-        if (object.isMesh) {
+      if (object.isMesh) {
 
-          object.castShadow = true;
-          object.receiveShadow = true;
-
-        }
+        object.castShadow = true;
+        object.receiveShadow = true;
 
       }
-    );
+
+    });
 
 
-    /* =========================
-       MEDIR MODELO
-    ========================= */
+    /* =============================
+       MEDIR MODELO ORIGINAL
+    ============================= */
 
-    const box =
+    let box =
       new THREE.Box3()
         .setFromObject(caixa);
 
     const size =
       box.getSize(
-        new THREE.Vector3()
-      );
-
-    const center =
-      box.getCenter(
         new THREE.Vector3()
       );
 
@@ -260,26 +198,14 @@ loader.load(
       size
     );
 
-    console.log(
-      "Centro original:",
-      center
-    );
 
+    /* =============================
+       ESCALA
 
-    /* =========================
-       CENTRALIZAR
-    ========================= */
-
-    caixa.position.set(
-      -center.x,
-      -center.y,
-      -center.z
-    );
-
-
-    /* =========================
-       ESCALA AUTOMÁTICA
-    ========================= */
+       Aqui fazemos a caixa ter
+       aproximadamente 4 unidades
+       no maior lado.
+    ============================= */
 
     const maiorLado =
       Math.max(
@@ -299,81 +225,118 @@ loader.load(
     );
 
 
-    /* =========================
-       COLOCAR SOBRE O CHÃO
-    ========================= */
+    /* =============================
+       RECALCULAR DEPOIS DA ESCALA
+    ============================= */
 
-    const boxDepois =
+    box =
       new THREE.Box3()
         .setFromObject(caixa);
 
-    const minY =
-      boxDepois.min.y;
+    const center =
+      box.getCenter(
+        new THREE.Vector3()
+      );
 
-    caixa.position.y +=
-      -0.6 - minY;
+
+    /* =============================
+       CENTRALIZAR
+
+       IMPORTANTE:
+       centralizamos DEPOIS de
+       redimensionar.
+    ============================= */
+
+    caixa.position.x -= center.x;
+    caixa.position.y -= center.y;
+    caixa.position.z -= center.z;
 
 
-    /* =========================
-       PROCURAR PEÇAS
-    ========================= */
+    /* =============================
+       RECALCULAR CAIXA FINAL
+    ============================= */
 
-    caixa.traverse(
-      (object) => {
+    box =
+      new THREE.Box3()
+        .setFromObject(caixa);
+
+    const finalSize =
+      box.getSize(
+        new THREE.Vector3()
+      );
+
+    const finalCenter =
+      box.getCenter(
+        new THREE.Vector3()
+      );
+
+
+    console.log(
+      "Tamanho final:",
+      finalSize
+    );
+
+
+    /* =============================
+       ENQUADRAR CÂMERA
+    ============================= */
+
+    enquadrarCaixa(
+      finalSize,
+      finalCenter
+    );
+
+
+    /* =============================
+       PROCURAR TAMPA
+    ============================= */
+
+    caixa.traverse((object) => {
+
+      if (object.isMesh) {
 
         console.log(
-          "Objeto da caixa:",
+          "Peça:",
           object.name
         );
 
-        if (
-          object.name ===
-          "Cube_064_2_0"
-        ) {
+      }
 
-          tampa = object;
 
-          console.log(
-            "Possível tampa encontrada:",
-            tampa
-          );
+      if (
+        object.name ===
+        "Cube_064_2_0"
+      ) {
 
-        }
+        tampa = object;
+
+        console.log(
+          "TAMPA ENCONTRADA:",
+          tampa
+        );
 
       }
-    );
 
-
-    /* =========================
-       AJUSTAR CÂMERA
-    ========================= */
-
-    controls.target.set(
-      0,
-      0.4,
-      0
-    );
-
-    controls.update();
+    });
 
   },
 
 
-  /* progresso */
+  /* =============================
+     PROGRESSO
+  ============================= */
 
   (xhr) => {
 
     if (xhr.total) {
 
       const porcentagem =
-        (
-          xhr.loaded /
-          xhr.total
-        ) * 100;
+        xhr.loaded /
+        xhr.total *
+        100;
 
       console.log(
-        "Carregando:",
-        porcentagem.toFixed(0) + "%"
+        `Carregando: ${porcentagem.toFixed(0)}%`
       );
 
     }
@@ -381,7 +344,9 @@ loader.load(
   },
 
 
-  /* erro */
+  /* =============================
+     ERRO
+  ============================= */
 
   (erro) => {
 
@@ -395,9 +360,116 @@ loader.load(
 );
 
 
-/* =========================
+/* =====================================================
+   FUNÇÃO QUE APROXIMA A CÂMERA
+===================================================== */
+
+function enquadrarCaixa(
+  size,
+  center
+) {
+
+  /*
+    Calcula uma distância de câmera
+    baseada no tamanho REAL do modelo.
+  */
+
+  const altura =
+    Math.max(
+      size.y,
+      0.1
+    );
+
+  const largura =
+    Math.max(
+      size.x,
+      size.z
+    );
+
+
+  const fov =
+    THREE.MathUtils.degToRad(
+      camera.fov
+    );
+
+
+  const distanciaVertical =
+    altura /
+    (
+      2 *
+      Math.tan(fov / 2)
+    );
+
+
+  const distanciaHorizontal =
+    largura /
+    (
+      2 *
+      Math.tan(fov / 2)
+    ) /
+    camera.aspect;
+
+
+  /*
+    1.15 deixa uma pequena margem.
+    Se quiser ainda MAIOR,
+    reduza para 1.0.
+  */
+
+  const distancia =
+    Math.max(
+      distanciaVertical,
+      distanciaHorizontal
+    ) * 1.15;
+
+
+  /*
+    Vista levemente de cima,
+    como uma caixa sobre uma mesa.
+  */
+
+  camera.position.set(
+    center.x,
+    center.y + size.y * 0.75,
+    center.z + distancia
+  );
+
+
+  controls.target.copy(
+    center
+  );
+
+
+  /*
+    Limites do zoom.
+  */
+
+  controls.minDistance =
+    distancia * 0.55;
+
+  controls.maxDistance =
+    distancia * 2.2;
+
+
+  camera.near =
+    Math.max(
+      distancia / 100,
+      0.01
+    );
+
+  camera.far =
+    distancia * 100;
+
+  camera.updateProjectionMatrix();
+
+  controls.update();
+
+}
+
+
+/* =====================================================
    RAYCAST
-========================= */
+===================================================== */
 
 const raycaster =
   new THREE.Raycaster();
@@ -406,9 +478,9 @@ const pointer =
   new THREE.Vector2();
 
 
-/* =========================
-   CLIQUE
-========================= */
+/* =====================================================
+   CLIQUE NA CAIXA
+===================================================== */
 
 renderer.domElement
   .addEventListener(
@@ -482,9 +554,9 @@ renderer.domElement
   );
 
 
-/* =========================
+/* =====================================================
    ABRIR / FECHAR
-========================= */
+===================================================== */
 
 function toggleCaixa() {
 
@@ -494,9 +566,9 @@ function toggleCaixa() {
 }
 
 
-/* =========================
-   ANIMAÇÃO
-========================= */
+/* =====================================================
+   LOOP
+===================================================== */
 
 function animate() {
 
@@ -508,9 +580,9 @@ function animate() {
   controls.update();
 
 
-  /* =========================
-     ANIMAR TAMPA
-  ========================= */
+  /* =============================
+     ANIMAÇÃO DA TAMPA
+  ============================= */
 
   if (tampa) {
 
@@ -530,7 +602,7 @@ function animate() {
       (
         destino -
         tampa.rotation.z
-      ) * 0.06;
+      ) * 0.07;
 
   }
 
@@ -546,9 +618,9 @@ function animate() {
 animate();
 
 
-/* =========================
+/* =====================================================
    RESPONSIVO
-========================= */
+===================================================== */
 
 window.addEventListener(
   "resize",
@@ -559,8 +631,7 @@ window.addEventListener(
       window.innerHeight;
 
 
-    camera
-      .updateProjectionMatrix();
+    camera.updateProjectionMatrix();
 
 
     renderer.setSize(
