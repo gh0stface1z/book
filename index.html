@@ -11,44 +11,30 @@
 
 <body>
 
-  <main class="pagina-inicial">
+  <div id="scene"></div>
 
-    <section class="caderno" id="caderno">
+  <div class="texto">
+    <h1>Antes de te conhecer</h1>
+    <p>24/08/2026</p>
+  </div>
 
-      <img
-        src="capa.webp"
-        alt="Capa do scrapbook"
-        class="imagem-capa"
-      >
+  <p class="instrucao">
+    clique na caixa
+  </p>
 
-      <div class="conteudo-capa">
+  <script type="importmap">
+  {
+    "imports": {
+      "three":
+      "https://unpkg.com/three@0.167.1/build/three.module.js",
 
-        <div class="estrela">✦</div>
+      "three/addons/":
+      "https://unpkg.com/three@0.167.1/examples/jsm/"
+    }
+  }
+  </script>
 
-        <h1>Antes de te conhecer</h1>
-
-        <p class="subtitulo">
-          cartas para alguém que ainda não conheço
-        </p>
-
-        <div class="lua">☾</div>
-
-        <div class="data">
-          <span>iniciado em 2026</span>
-          <span>24/08</span>
-        </div>
-
-      </div>
-
-    </section>
-
-    <p class="instrucao">
-      clique no caderno para abrir
-    </p>
-
-  </main>
-
-  <script src="script.js"></script>
+  <script type="module" src="script.js"></script>
 
 </body>
 </html>
