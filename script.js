@@ -153,30 +153,45 @@ scene.add(warmLight);
    CHÃO
 ========================= */
 
-const floor =
-  new THREE.Mesh(
+const box = new THREE.Box3().setFromObject(caixa);
 
-    new THREE.CircleGeometry(
-      5,
-      64
-    ),
+const size = box.getSize(new THREE.Vector3());
+const center = box.getCenter(new THREE.Vector3());
 
-    new THREE.MeshStandardMaterial({
-      color: 0x15120f,
-      roughness: 0.95
-    })
+// centraliza a caixa
+caixa.position.sub(center);
 
-  );
+// recalcula depois de centralizar
+const maxDim = Math.max(size.x, size.y, size.z);
 
-floor.rotation.x =
-  -Math.PI / 2;
+// tamanho visual que queremos
+const targetSize = 4;
 
-floor.position.y =
-  -0.65;
+const scale = targetSize / maxDim;
 
-floor.receiveShadow = true;
+caixa.scale.setScalar(scale);
 
-scene.add(floor);
+// recalcula o tamanho FINAL
+const finalBox = new THREE.Box3().setFromObject(caixa);
+const finalSize = finalBox.getSize(new THREE.Vector3());
+
+// câmera posicionada de acordo com o tamanho real
+const distance =
+  Math.max(finalSize.x, finalSize.y, finalSize.z) * 1.8;
+
+camera.position.set(
+  distance * 0.8,
+  distance * 0.55,
+  distance
+);
+
+controls.target.set(
+  0,
+  0,
+  0
+);
+
+controls.update();
 
 
 /* =========================
