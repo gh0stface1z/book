@@ -11,8 +11,7 @@ from "three/addons/controls/OrbitControls.js";
    CENA
 ========================= */
 
-const scene =
-  new THREE.Scene();
+const scene = new THREE.Scene();
 
 
 /* =========================
@@ -29,9 +28,9 @@ const camera =
   );
 
 camera.position.set(
-  3.5,
-  2.5,
-  4.5
+  4,
+  3,
+  5
 );
 
 
@@ -84,14 +83,14 @@ controls.enableDamping = true;
 controls.enablePan = false;
 
 controls.minDistance = 3;
-controls.maxDistance = 7;
+controls.maxDistance = 8;
 
 controls.maxPolarAngle =
   Math.PI / 2.05;
 
 controls.target.set(
   0,
-  0.3,
+  0.4,
   0
 );
 
@@ -131,7 +130,7 @@ scene.add(mainLight);
 
 
 /* =========================
-   LUZ QUENTE LATERAL
+   LUZ QUENTE
 ========================= */
 
 const warmLight =
@@ -156,8 +155,9 @@ scene.add(warmLight);
 
 const floor =
   new THREE.Mesh(
+
     new THREE.CircleGeometry(
-      4,
+      5,
       64
     ),
 
@@ -165,12 +165,14 @@ const floor =
       color: 0x15120f,
       roughness: 0.95
     })
+
   );
 
 floor.rotation.x =
   -Math.PI / 2;
 
-floor.position.y = -0.48;
+floor.position.y =
+  -0.65;
 
 floor.receiveShadow = true;
 
@@ -184,11 +186,11 @@ scene.add(floor);
 const loader =
   new GLTFLoader();
 
-let caixa;
-
-let tampa;
+let caixa = null;
+let tampa = null;
 
 let caixaAberta = false;
+
 
 loader.load(
 
@@ -199,33 +201,6 @@ loader.load(
     caixa = gltf.scene;
 
     scene.add(caixa);
-
-
-    /* =========================
-       ESCALA
-    ========================= */
-
-    caixa.scale.setScalar(2);
-
-
-    /* =========================
-       CENTRALIZAR MODELO
-    ========================= */
-
-    const box =
-      new THREE.Box3()
-        .setFromObject(caixa);
-
-    const center =
-      box.getCenter(
-        new THREE.Vector3()
-      );
-
-    caixa.position.x -=
-      center.x * 2;
-
-    caixa.position.z -=
-      center.z * 2;
 
 
     /* =========================
@@ -247,14 +222,92 @@ loader.load(
 
 
     /* =========================
-       PROCURAR TAMPA
+       MEDIR MODELO
+    ========================= */
+
+    const box =
+      new THREE.Box3()
+        .setFromObject(caixa);
+
+    const size =
+      box.getSize(
+        new THREE.Vector3()
+      );
+
+    const center =
+      box.getCenter(
+        new THREE.Vector3()
+      );
+
+
+    console.log(
+      "Tamanho original:",
+      size
+    );
+
+    console.log(
+      "Centro original:",
+      center
+    );
+
+
+    /* =========================
+       CENTRALIZAR
+    ========================= */
+
+    caixa.position.set(
+      -center.x,
+      -center.y,
+      -center.z
+    );
+
+
+    /* =========================
+       ESCALA AUTOMÁTICA
+    ========================= */
+
+    const maiorLado =
+      Math.max(
+        size.x,
+        size.y,
+        size.z
+      );
+
+    const tamanhoDesejado = 4;
+
+    const escala =
+      tamanhoDesejado /
+      maiorLado;
+
+    caixa.scale.setScalar(
+      escala
+    );
+
+
+    /* =========================
+       COLOCAR SOBRE O CHÃO
+    ========================= */
+
+    const boxDepois =
+      new THREE.Box3()
+        .setFromObject(caixa);
+
+    const minY =
+      boxDepois.min.y;
+
+    caixa.position.y +=
+      -0.6 - minY;
+
+
+    /* =========================
+       PROCURAR PEÇAS
     ========================= */
 
     caixa.traverse(
       (object) => {
 
         console.log(
-          "Objeto:",
+          "Objeto da caixa:",
           object.name
         );
 
@@ -266,7 +319,7 @@ loader.load(
           tampa = object;
 
           console.log(
-            "Tampa encontrada!",
+            "Possível tampa encontrada:",
             tampa
           );
 
@@ -275,9 +328,45 @@ loader.load(
       }
     );
 
+
+    /* =========================
+       AJUSTAR CÂMERA
+    ========================= */
+
+    controls.target.set(
+      0,
+      0.4,
+      0
+    );
+
+    controls.update();
+
   },
 
-  undefined,
+
+  /* progresso */
+
+  (xhr) => {
+
+    if (xhr.total) {
+
+      const porcentagem =
+        (
+          xhr.loaded /
+          xhr.total
+        ) * 100;
+
+      console.log(
+        "Carregando:",
+        porcentagem.toFixed(0) + "%"
+      );
+
+    }
+
+  },
+
+
+  /* erro */
 
   (erro) => {
 
@@ -292,7 +381,7 @@ loader.load(
 
 
 /* =========================
-   CLIQUE
+   RAYCAST
 ========================= */
 
 const raycaster =
@@ -302,12 +391,18 @@ const pointer =
   new THREE.Vector2();
 
 
+/* =========================
+   CLIQUE
+========================= */
+
 renderer.domElement
   .addEventListener(
     "click",
     (event) => {
 
-      if (!caixa) return;
+      if (!caixa) {
+        return;
+      }
 
 
       pointer.x =
@@ -315,6 +410,7 @@ renderer.domElement
           event.clientX /
           window.innerWidth
         ) * 2 - 1;
+
 
       pointer.y =
         -(
@@ -329,13 +425,18 @@ renderer.domElement
       );
 
 
-      const objects = [];
+      const meshes = [];
+
 
       caixa.traverse(
         (object) => {
 
           if (object.isMesh) {
-            objects.push(object);
+
+            meshes.push(
+              object
+            );
+
           }
 
         }
@@ -344,12 +445,19 @@ renderer.domElement
 
       const hits =
         raycaster.intersectObjects(
-          objects,
+          meshes,
           true
         );
 
 
-      if (hits.length > 0) {
+      if (
+        hits.length > 0
+      ) {
+
+        console.log(
+          "Clicou em:",
+          hits[0].object.name
+        );
 
         toggleCaixa();
 
@@ -386,7 +494,7 @@ function animate() {
 
 
   /* =========================
-     TAMPA
+     ANIMAR TAMPA
   ========================= */
 
   if (tampa) {
@@ -419,11 +527,12 @@ function animate() {
 
 }
 
+
 animate();
 
 
 /* =========================
-   REDIMENSIONAR
+   RESPONSIVO
 ========================= */
 
 window.addEventListener(
@@ -434,7 +543,10 @@ window.addEventListener(
       window.innerWidth /
       window.innerHeight;
 
-    camera.updateProjectionMatrix();
+
+    camera
+      .updateProjectionMatrix();
+
 
     renderer.setSize(
       window.innerWidth,
