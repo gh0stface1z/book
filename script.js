@@ -3,9 +3,6 @@ import * as THREE from "three";
 import { GLTFLoader } from
   "three/addons/loaders/GLTFLoader.js";
 
-import { OrbitControls } from
-  "three/addons/controls/OrbitControls.js";
-
 
 /* =========================================
    CENA
@@ -13,7 +10,7 @@ import { OrbitControls } from
 
 const scene = new THREE.Scene();
 
-scene.background = new THREE.Color(0x171412);
+scene.background = new THREE.Color(0xc9b7aa);
 
 
 /* =========================================
@@ -21,16 +18,22 @@ scene.background = new THREE.Color(0x171412);
 ========================================= */
 
 const camera = new THREE.PerspectiveCamera(
-  45,
+  42,
   window.innerWidth / window.innerHeight,
   0.1,
   100
 );
 
 camera.position.set(
-  5,
-  4,
-  6
+  5.5,
+  3.4,
+  7.2
+);
+
+camera.lookAt(
+  0,
+  0.6,
+  0
 );
 
 
@@ -54,84 +57,282 @@ renderer.setPixelRatio(
 renderer.outputColorSpace =
   THREE.SRGBColorSpace;
 
+renderer.shadowMap.enabled = true;
+
+renderer.shadowMap.type =
+  THREE.PCFSoftShadowMap;
+
 document
   .getElementById("scene")
   .appendChild(renderer.domElement);
 
 
 /* =========================================
-   CÂMERA COM MOUSE
+   LUZ AMBIENTE
 ========================================= */
 
-const controls = new OrbitControls(
-  camera,
-  renderer.domElement
+const ambient =
+  new THREE.HemisphereLight(
+    0xfff3e6,
+    0x7a6256,
+    2.2
+  );
+
+scene.add(ambient);
+
+
+/* =========================================
+   LUZ PRINCIPAL
+========================================= */
+
+const mainLight =
+  new THREE.DirectionalLight(
+    0xffe2c2,
+    3
+  );
+
+mainLight.position.set(
+  4,
+  7,
+  5
 );
 
-controls.enableDamping = true;
+mainLight.castShadow = true;
 
-controls.target.set(
+mainLight.shadow.mapSize.width = 2048;
+mainLight.shadow.mapSize.height = 2048;
+
+scene.add(mainLight);
+
+
+/* =========================================
+   LUZ QUENTE
+========================================= */
+
+const warmLight =
+  new THREE.PointLight(
+    0xffb276,
+    18,
+    14
+  );
+
+warmLight.position.set(
+  -3,
+  3,
+  3
+);
+
+scene.add(warmLight);
+
+
+/* =========================================
+   CHÃO
+========================================= */
+
+const floorGeometry =
+  new THREE.PlaneGeometry(
+    10,
+    10
+  );
+
+const floorMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0xb89473,
+    roughness: 0.9
+  });
+
+const floor =
+  new THREE.Mesh(
+    floorGeometry,
+    floorMaterial
+  );
+
+floor.rotation.x =
+  -Math.PI / 2;
+
+floor.position.y = -1.15;
+
+floor.receiveShadow = true;
+
+scene.add(floor);
+
+
+/* =========================================
+   PAREDE DO FUNDO
+========================================= */
+
+const wallBackGeometry =
+  new THREE.PlaneGeometry(
+    10,
+    6
+  );
+
+const wallBackMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0xe7d8cf,
+    roughness: 1
+  });
+
+const wallBack =
+  new THREE.Mesh(
+    wallBackGeometry,
+    wallBackMaterial
+  );
+
+wallBack.position.set(
   0,
-  0,
+  1.85,
+  -4.1
+);
+
+wallBack.receiveShadow = true;
+
+scene.add(wallBack);
+
+
+/* =========================================
+   PAREDE LATERAL
+========================================= */
+
+const wallSideGeometry =
+  new THREE.PlaneGeometry(
+    10,
+    6
+  );
+
+const wallSideMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0xd7c2b6,
+    roughness: 1
+  });
+
+const wallSide =
+  new THREE.Mesh(
+    wallSideGeometry,
+    wallSideMaterial
+  );
+
+wallSide.rotation.y =
+  Math.PI / 2;
+
+wallSide.position.set(
+  -4.1,
+  1.85,
   0
 );
 
-controls.update();
+wallSide.receiveShadow = true;
+
+scene.add(wallSide);
 
 
 /* =========================================
-   LUZ
+   RODAPÉ DO FUNDO
 ========================================= */
 
-scene.add(
-  new THREE.HemisphereLight(
-    0xffffff,
-    0x443322,
-    3
-  )
-);
-
-
-const light =
-  new THREE.DirectionalLight(
-    0xffffff,
-    4
+const baseboardBack =
+  new THREE.Mesh(
+    new THREE.BoxGeometry(
+      8.2,
+      0.14,
+      0.12
+    ),
+    new THREE.MeshStandardMaterial({
+      color: 0xf1e7df
+    })
   );
 
-light.position.set(
-  5,
-  8,
-  6
+baseboardBack.position.set(
+  0,
+  -1.07,
+  -4
 );
 
-scene.add(light);
+scene.add(baseboardBack);
 
 
 /* =========================================
-   GRUPO CENTRAL
+   RODAPÉ LATERAL
 ========================================= */
 
-const grupo = new THREE.Group();
+const baseboardSide =
+  new THREE.Mesh(
+    new THREE.BoxGeometry(
+      0.12,
+      0.14,
+      8.2
+    ),
+    new THREE.MeshStandardMaterial({
+      color: 0xf1e7df
+    })
+  );
 
-scene.add(grupo);
+baseboardSide.position.set(
+  -4,
+  -1.07,
+  0
+);
+
+scene.add(baseboardSide);
 
 
 /* =========================================
-   VARIÁVEIS DA CAIXA
+   TAPETE
 ========================================= */
 
-let caixa = null;
+const rugGeometry =
+  new THREE.PlaneGeometry(
+    4.8,
+    3.3
+  );
 
-let tampa = null;
+const rugMaterial =
+  new THREE.MeshStandardMaterial({
+    color: 0xbfa8b6,
+    roughness: 1
+  });
 
-let caixaAberta = false;
+const rug =
+  new THREE.Mesh(
+    rugGeometry,
+    rugMaterial
+  );
+
+rug.rotation.x =
+  -Math.PI / 2;
+
+rug.position.set(
+  0.4,
+  -1.135,
+  0.3
+);
+
+rug.receiveShadow = true;
+
+scene.add(rug);
 
 
 /* =========================================
    CAIXA
 ========================================= */
 
-const loader = new GLTFLoader();
+const grupoCaixa =
+  new THREE.Group();
+
+scene.add(grupoCaixa);
+
+let caixa = null;
+
+let tampa = null;
+
+let papel = null;
+
+let prego = null;
+
+
+const loader =
+  new GLTFLoader();
+
 
 loader.load(
 
@@ -141,17 +342,12 @@ loader.load(
 
     caixa = gltf.scene;
 
-    grupo.add(caixa);
+    grupoCaixa.add(caixa);
 
 
-    /*
-      CENTRO REAL do seu arquivo.
-
-      Eu medi o GLB:
-      X ≈ 34.0247
-      Y ≈ -0.6852
-      Z ≈ 1.3798
-    */
+    /* =====================================
+       POSIÇÃO ORIGINAL DO ARQUIVO
+    ===================================== */
 
     caixa.position.set(
       -34.0247,
@@ -160,177 +356,133 @@ loader.load(
     );
 
 
-    /*
-      Amplia o grupo inteiro.
-    */
+    /* =====================================
+       TAMANHO
+    ===================================== */
 
-    grupo.scale.setScalar(2.4);
+    grupoCaixa.scale.setScalar(
+      2.15
+    );
 
 
-    /*
-      Materiais.
-    */
+    /* =====================================
+       POSIÇÃO NO CENÁRIO
+    ===================================== */
+
+    grupoCaixa.position.set(
+      0.5,
+      -0.75,
+      0.2
+    );
+
+
+    /* =====================================
+       LEVE ROTAÇÃO
+    ===================================== */
+
+    grupoCaixa.rotation.y =
+      -0.18;
+
+
+    /* =====================================
+       IDENTIFICAR PEÇAS
+    ===================================== */
 
     caixa.traverse((objeto) => {
 
-      if (objeto.isMesh) {
-
-        objeto.material.side =
-          THREE.DoubleSide;
-
-        objeto.material.needsUpdate =
-          true;
+      if (!objeto.isMesh) {
+        return;
+      }
 
 
-        /*
-          Mostra no console o nome
-          de cada parte do modelo.
-        */
+      objeto.castShadow = true;
+      objeto.receiveShadow = true;
 
-        console.log(
-          "PEÇA:",
-          objeto.name
-        );
+
+      if (objeto.material) {
+
+        if (
+          Array.isArray(
+            objeto.material
+          )
+        ) {
+
+          objeto.material.forEach(
+            (material) => {
+
+              material.side =
+                THREE.DoubleSide;
+
+              material.needsUpdate =
+                true;
+
+            }
+          );
+
+        } else {
+
+          objeto.material.side =
+            THREE.DoubleSide;
+
+          objeto.material.needsUpdate =
+            true;
+
+        }
 
       }
 
 
-      /*
-        ESTA é a peça que estamos
-        testando como tampa.
-      */
-
       if (
-        objeto.name ===
-        "Cube_036_8_0"
+        objeto.name.startsWith(
+          "Cube_036"
+        )
       ) {
 
         tampa = objeto;
 
-        console.log(
-          "TAMPA ENCONTRADA:",
-          tampa
-        );
+      }
+
+
+      if (
+        objeto.name.startsWith(
+          "Cube_064"
+        )
+      ) {
+
+        papel = objeto;
+
+        papel.visible = false;
+
+      }
+
+
+      if (
+        objeto.name.startsWith(
+          "Cube_063"
+        )
+      ) {
+
+        prego = objeto;
+
+        prego.visible = false;
 
       }
 
     });
 
-
-    console.log(
-      "CAIXA CARREGADA",
-      caixa
-    );
-
   },
 
-  (xhr) => {
-
-    if (xhr.total) {
-
-      console.log(
-        Math.round(
-          xhr.loaded /
-          xhr.total *
-          100
-        ) + "%"
-      );
-
-    }
-
-  },
+  undefined,
 
   (erro) => {
 
     console.error(
-      "ERRO NO GLB:",
+      "Erro carregando caixa:",
       erro
     );
 
   }
 
-);
-
-
-/* =========================================
-   CLIQUE NA TAMPA
-========================================= */
-
-const raycaster =
-  new THREE.Raycaster();
-
-const pointer =
-  new THREE.Vector2();
-
-
-renderer.domElement.addEventListener(
-  "click",
-  (event) => {
-
-    /*
-      Se a tampa ainda não carregou,
-      não faz nada.
-    */
-
-    if (!tampa) {
-      return;
-    }
-
-
-    /*
-      Converte o clique do mouse
-      para coordenadas do Three.js.
-    */
-
-    pointer.x =
-      (
-        event.clientX /
-        window.innerWidth
-      ) * 2 - 1;
-
-
-    pointer.y =
-      -(
-        event.clientY /
-        window.innerHeight
-      ) * 2 + 1;
-
-
-    raycaster.setFromCamera(
-      pointer,
-      camera
-    );
-
-
-    /*
-      Verifica se clicamos
-      especificamente na tampa.
-    */
-
-    const hits =
-      raycaster.intersectObject(
-        tampa,
-        true
-      );
-
-
-    if (
-      hits.length > 0
-    ) {
-
-      caixaAberta =
-        !caixaAberta;
-
-
-      console.log(
-        caixaAberta
-          ? "ABRINDO CAIXA"
-          : "FECHANDO CAIXA"
-      );
-
-    }
-
-  }
 );
 
 
@@ -343,50 +495,6 @@ function animate() {
   requestAnimationFrame(
     animate
   );
-
-
-  controls.update();
-
-
-  /* =====================================
-     ANIMAÇÃO DA TAMPA
-  ===================================== */
-
-  if (tampa) {
-
-    /*
-      0 = posição fechada.
-    */
-
-    const fechada = 0;
-
-
-    /*
-      Aproximadamente 100 graus.
-    */
-
-   const aberta =
-  Math.PI * 0.55;
-
-
-    const destino =
-      caixaAberta
-        ? aberta
-        : fechada;
-
-
-    /*
-      Movimento suave.
-    */
-
-    tampa.rotation.z +=
-      (
-        destino -
-        tampa.rotation.z
-      ) * 0.06;
-
-  }
-
 
   renderer.render(
     scene,
@@ -410,9 +518,7 @@ window.addEventListener(
       window.innerWidth /
       window.innerHeight;
 
-
     camera.updateProjectionMatrix();
-
 
     renderer.setSize(
       window.innerWidth,
